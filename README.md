@@ -2,7 +2,7 @@
 
 Small utility - programming example - about how to utilize the system's **libpcap** library.
 
-## Table of contents ##
+## <a name="TOP">Table of contents</a>
 
 **[A. How to create autotools for this program](#A)**
 
@@ -18,7 +18,7 @@ Small utility - programming example - about how to utilize the system's **libpca
 
 **[B.1 What it is for?](#B1)**
 
-###<a name="A">A. How to create autotools for this program</a>
+## A. How to create autotools for this program
 
 ## A.1 Preparation
 Create a Makefile.am and the source files according to the needs, in this example all source(s) placed into the root of the working directory.
@@ -30,6 +30,9 @@ Create a Makefile.am and the source files according to the needs, in this exampl
   pcapdemo_LDFLAGS = -L/usr/lib -lc -lm -lpcap -lpthread
   distdir = $(prefix)
 ```
+
+[back to top](#TOP)
+
 ### A.2 autoscan
 Execute **autoscan** utility
 ```bash
@@ -71,6 +74,9 @@ AC_TYPE_SIZE_T
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
 ```
+
+[back to top](#TOP)
+
 ### A.3 automake
 We have to add **AM_INIT_AUTOMAKE** to the  ***.scan*** file at the location right after **AC_CONFIG_HEADERS([config.h])**, then copy or rename the ***configure.scan*** file to **configure.ac**.
 
@@ -81,6 +87,9 @@ Before we execute **autoreconf -ivf** - to be sure avoiding error messages - we 
 ```bash
 automake -caf --foreign
 ```
+
+[back to top](#TOP)
+
 ### A.4 autoreconf
 After executing previous command above, then we can call the next utility to generate our **configure** script.
 ```bash
@@ -88,6 +97,8 @@ autoreconf -ivf
 ```
 
 If no error occurres, then we will have our Makefile ready to deal with our codes.
+
+[back to top](#TOP)
 
 ###<a name="B">B. pcapdemo: about pcapdemo utility</a>
 
@@ -108,3 +119,5 @@ The ***filter_text*** argument[s] is optional, using that, you can refine the pa
 **Note!** The access to the ***bpf(4)*** device - aka. Berkley Packet Filter device, can be found in your system's device subdirecory as **/dev/bpf*** - requires special privileges - most probably ***root*** access rights. If you aware of access and use *pcap* as ***root***, you can give specific group or user to have access rights to the device - consult your system's manual to share access privileges user and/or group wise. On FreeBSD you can edit ***/etc/devfs.conf*** defining which user and or group have access and how can access the device.
 
 If you have not got the proper access rights the application will return with error.
+
+[back to top](#TOP)
