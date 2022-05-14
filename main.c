@@ -20,6 +20,7 @@
 #include <libgen.h>
 #include <sys/types.h>
 #include <getopt.h>
+#include <signal.h>
 #include <ctype.h>
 #include <assert.h>
 #include <err.h>
@@ -33,6 +34,7 @@ void usage(const char*pname);
 char *trim(char *s);
 void hexdump(const char*title, const void* data, size_t size);
 void got_packet(u_char *user, const struct pcap_pkthdr *h,const u_char *byte);
+void sig_handler(int signal);
 
 #ifndef PCAP_BUF_SIZE
 #define PCAP_BUF_SIZE (1500)
@@ -55,11 +57,14 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h,const u_char *byte);
 #endif  //!KEV_SIZE
 
 static int hflag;
+pcap_t *gphandle = NULL;
+struct bpf_program* gbfp = NULL;
+
 int main(int argc, char **argv) {
     /*
      * pcap handle 
      */
-    pcap_t *phandle = NULL;
+    static pcap_t *phandle = NULL;
     /* 
      * bpf filter struct
      */
@@ -189,6 +194,12 @@ int main(int argc, char **argv) {
         printf(" Filter: %s\n", fptr);
         filter = fptr;
     }
+    /* 
+     * Signal handling
+     */
+    signal(SIGABRT, sig_handler);
+    signal(SIGINT, sig_handler);
+    signal(SIGKILL, sig_handler);
     /*
      * PCAP initialisation 
      */
@@ -196,6 +207,7 @@ int main(int argc, char **argv) {
         printf(" Error: pcap_open_live failed\n");
         goto end;
     }
+    gphandle = phandle;
     // Preparation - options settings
     // if ((phandle = pcap_create(device, errbuf)) == NULL) {
     //     printf(" Error: pcap_open_live failed\n");
@@ -234,6 +246,7 @@ int main(int argc, char **argv) {
         pcap_perror(phandle, "set filter");
         goto error;
     }
+    gbfp = &bfp;
     if ((pcap_fd = pcap_get_selectable_fd(phandle)) <= 0) {
         pcap_perror(phandle, "get selectable filedescriptor");
         goto error;
@@ -259,7 +272,12 @@ int main(int argc, char **argv) {
                 int ev_id = events[i].ident;
                 if (ev_id == pcap_fd) {
                     pcap_dispatch(phandle, -1, got_packet, NULL);
-                    printf("Something was wricaptured on '%s'\n", device);
+                    // pcap_next(phandle, &pkh);
+                    // printf("Something was wricaptured on '%s'\n", device);
+                    // if (NULL != pkh) {
+                    //     printf(" pkh->caplen: %d\n", pkh->caplen);
+                    //     printf("    pkh->len: %d\n", pkh->len);
+                    // }
                 }
             }
         }
@@ -362,4 +380,18 @@ void hexdump(const char*title _U_, const void* data, size_t size) {
 	if (title) {
 		fprintf(stdout, "END %s\n", title);
 	}
+}
+void sig_handler(int sig) {
+    switch(sig) {
+        default:
+            printf("phandle: %p\n", gphandle);
+            if (gbfp) {
+                pcap_freecode(gbfp);
+            }
+            if (gphandle) {
+                pcap_close(gphandle);
+            }
+            exit(0);
+        break;
+    }
 }
