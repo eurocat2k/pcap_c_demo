@@ -27,6 +27,12 @@
 #include <pcap.h>
 #include <pcap/pcap.h>
 #include <sys/event.h>
+#include <errno.h> 
+#include <sys/socket.h> 
+#include <netinet/in.h> 
+#include <arpa/inet.h> 
+#include <netinet/if_ether.h>
+
 
 #define _U_
 
@@ -37,7 +43,7 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h,const u_char *byte);
 void sig_handler(int signal);
 
 #ifndef PCAP_BUF_SIZE
-#define PCAP_BUF_SIZE (1500)
+#define PCAP_BUF_SIZE (1600)
 #endif //!PCAP_BUF_SIZE
 
 #ifndef PCAP_SNAP_SIZE
@@ -45,7 +51,7 @@ void sig_handler(int signal);
 #endif  //!PCAP_SNAP_SIZE
 
 #ifndef PCAP_TIMEOUT
-#define PCAP_TIMEOUT    (1000)
+#define PCAP_TIMEOUT    (100)
 #endif  //!PCAP_TIMEOUT
 
 #ifndef FILTER_LEN
@@ -203,50 +209,67 @@ int main(int argc, char **argv) {
     /*
      * PCAP initialisation 
      */
+#ifdef PCAP_CREATE_LIVE
+    // we setup and initialize pcap handle calling pcap_open_live
     if ((phandle = pcap_open_live(device, PCAP_SNAP_SIZE, 1, 1000, errbuf)) == NULL){
         printf(" Error: pcap_open_live failed\n");
         goto end;
     }
-    gphandle = phandle;
-    // Preparation - options settings
-    // if ((phandle = pcap_create(device, errbuf)) == NULL) {
-    //     printf(" Error: pcap_open_live failed\n");
-    //     goto end;
-    // }
-    // if (pcap_set_buffer_size(phandle, PCAP_BUF_SIZE) != 0) {
-    //     pcap_perror(phandle, "set buffer size");
-    //     goto error;
-    // }
-    // if (pcap_set_timeout(phandle, PCAP_TIMEOUT) != 0) {
-    //     pcap_perror(phandle, "set timeout");
-    //     goto error;
-    // }
-    // if (pcap_set_snaplen(phandle, 0x0FFFF) != 0) {
-    //     pcap_perror(phandle, "set snaplen to default");
-    //     goto error;
-    // }
-    // if (pcap_set_promisc(phandle, 1) != 0) {
-    //     pcap_perror(phandle, "set promisc mode");
-    //     goto error;
-    // }
-    // if (pcap_setnonblock(phandle, 1, errbuf) != 0) {
-    //     pcap_perror(phandle, "set nonblocking mode");
-    //     goto error;
-    // }
-    // Activate
-    // if (pcap_activate(phandle) != 0) {
-    //     pcap_perror(phandle, "activation");
-    //     goto error;
-    // }
+#else
+    // Preparation - options settings 
+    // create pcap handle
+    if ((phandle = pcap_create(device, errbuf)) == NULL) {
+        printf(" Error: pcap_open_live failed\n");
+        goto end;
+    }
+    // set buffer size
+    if (pcap_set_buffer_size(phandle, PCAP_BUF_SIZE) != 0) {
+        pcap_perror(phandle, "set buffer size");
+        goto error;
+    }
+    // set pcap buffer timeout
+    if (pcap_set_timeout(phandle, PCAP_TIMEOUT) != 0) {
+        pcap_perror(phandle, "set timeout");
+        goto error;
+    }
+    // set snaplen
+    if (pcap_set_snaplen(phandle, 0x0FFFF) != 0) {
+        pcap_perror(phandle, "set snaplen to default");
+        goto error;
+    }
+    // switch to promisc mode
+    if (pcap_set_promisc(phandle, 1) != 0) {
+        pcap_perror(phandle, "set promisc mode");
+        goto error;
+    }
+    // set nonblocking
+    if (pcap_setnonblock(phandle, 1, errbuf) != 0) {
+        pcap_perror(phandle, "set nonblocking mode");
+        goto error;
+    }
+    // Finally activate pcap handle - no more options modification enabled after this
+    if (pcap_activate(phandle) != 0) {
+        pcap_perror(phandle, "activation");
+        goto error;
+    }
+#endif
+    gphandle = phandle; // save global pointer - signal handlers needed
+    // compile filter text
     if (pcap_compile(phandle, &bfp, filter, 1, PCAP_NETMASK_UNKNOWN) != 0) {
         pcap_perror(phandle, "compile filter");
         goto error;
     }
+    // set filter
     if (pcap_setfilter(phandle, &bfp) != 0) {
         pcap_perror(phandle, "set filter");
         goto error;
     }
-    gbfp = &bfp;
+    gbfp = &bfp;    // save filter or simply free it after this
+    if (gbfp) {
+        pcap_freecode(gbfp);
+        gbfp = NULL;        // we do not care later on
+    }
+    // get selectable file descriptor
     if ((pcap_fd = pcap_get_selectable_fd(phandle)) <= 0) {
         pcap_perror(phandle, "get selectable filedescriptor");
         goto error;
