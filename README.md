@@ -3,12 +3,19 @@
 Small utility - programming example - about how to utilize the system's **libpcap** library.
 
 ## Table of contents ##
+
 **[A. How to create autotools for this program](#A)**
+
 **[A.1 Preparation](#a1-preparation)**
+
 **[A.2 autoscan](#a2-autoscan)**
+
 **[A.3 automake](#a3-automake)**
+
 **[A.4 autoreconf](#a4-autoreconf)**
+
 **[B. pcapdemo: about the pcapdemo utility](#B)**
+
 **[B.1 What it is for?](#B1)**
 
 ###<a name="A">A. How to create autotools for this program</a>
