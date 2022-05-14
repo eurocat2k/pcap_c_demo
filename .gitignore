@@ -82,3 +82,4 @@ ar-lib
 config.h
 configure
 m4/
+dist/
