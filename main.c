@@ -33,6 +33,7 @@
 #include <arpa/inet.h> 
 #include <netinet/if_ether.h>
 
+#include "cap.h"
 
 #define _U_
 
@@ -356,10 +357,32 @@ char *trim(char *s) {
  * @param  const unsigedn char *byte - pointer to the buffer, where caught packets stored during the operation
  * @retval None
  */
-void got_packet(u_char *user, const struct pcap_pkthdr *h,const u_char *byte){
+void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet){
+    const struct sniff_ethernet *ethernet;  /* The ethernet header [1] */
+    const struct sniff_ip *ip;              /* The IP header */
+    const struct sniff_tcp *tcp;            /* The TCP header */
+    const struct sniff_udp *udp;            /* The UDP header */
+    const unsigned char *payload;                    /* Packet payload */
+    char *ether_header = NULL, *etmp;
+    char *ip_header = NULL, *itmp;
+    char *udp_header = NULL, *utmp;
+    int dstport = -1;
+    int size_ip;
+    int size_tcp;
+    int size_udp;
+    int size_payload = 0;
+
     printf(" caption size: %d\n", h->caplen);
     printf("          len: %d\n", h->len);
-    hexdump(NULL, (const void *)byte, (size_t)h->caplen);
+    hexdump(NULL, (const void *)packet, (size_t)h->caplen);
+
+    ethernet = (struct sniff_ethernet*)(packet);
+    struct ip *iph = (struct ip*)(packet + sizeof(struct ether_header));
+    size_ip = iph->ip_hl*4;
+    printf(" Sizeof IP header: %d\n", (unsigned short)size_ip);
+    // printf(" Version of packet: %d\n", (unsigned short)iph->ip_v);
+    printf("       IP version: %d\n", (int)iph->ip_v);
+    
     return;
 }
 /**
