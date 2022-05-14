@@ -100,9 +100,9 @@ If no error occurres, then we will have our Makefile ready to deal with our code
 
 [back to top](#TOP)
 
-###<a name="B">B. pcapdemo: about pcapdemo utility</a>
+### <a name="B">B. pcapdemo: about pcapdemo utility</a>
 
-####<a name="B1">B.1 What it is for?</a>
+#### <a name="B1">B.1 What it is for?</a>
 The small utility sniffs network packages using **libpcap** and **bpf(4)** accepts two parameters at the command prompt. See usage below:
 ```bash
 pcapdemo [-h|--help] [-i|--if <name> [filter_text]]
