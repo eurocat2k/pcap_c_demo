@@ -115,9 +115,8 @@ If no error occurres, then we will have our Makefile ready to deal with our code
 <a name="B"></a>
 ## B. pcapdemo: about the pcapdemo utility
 
-<a name="B1">
+<a name="B1"></a>
 ## B.1 What it is for?
-</a>
 
 The small utility sniffs network packages using **libpcap** and **bpf(4)** accepts two parameters at the command prompt. See usage below:
 ```bash
