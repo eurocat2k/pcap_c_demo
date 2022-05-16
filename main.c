@@ -388,7 +388,7 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
     unsigned int size_payload = 0;          /* sizeof payload */
     unsigned int total_len = h->caplen - sizeof(struct pcap_pkthdr);    // total packet size without PCAP header
     unsigned short ether_type = 0;          /* the ethernet type */
-    // unsigned short vlan_type = 0;           /* VLAN ethernet type */
+    unsigned short vlan_type = 0;           /* VLAN ethernet type */
     unsigned short vlan_tag = 0;            /* VLAN tag */
     unsigned short vlan_proto = 0;          /* VLAN protocol */
     unsigned short vlan_encap_proto = 0;    /* VLAN encapsulation protocol */
@@ -474,6 +474,8 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
             printf("          VLAN tag: %d [0x%04X]\n", vlan_tag, vlan_tag);
             vlan_proto = (unsigned short)(vlan_ethernet->evl_encap_proto>>8|vlan_ethernet->evl_encap_proto<<8);
             printf("        VLAN proto: %d [0x%04X]\n", vlan_proto, vlan_proto);
+            vlan_encap_proto = (unsigned short)(vlan_ethernet->evl_encap_proto>>8|vlan_ethernet->evl_encap_proto<<8);
+            printf(" VLAN encapsulation protocol: %d [0x%04X]\n", vlan_encap_proto, vlan_encap_proto);
             // 
             hexdump("packet", (const void *)packet, (size_t)h->caplen); // print entire pcap packet - without pcap header
         break;
