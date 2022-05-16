@@ -18,6 +18,9 @@ Small utility - programming example - about how to utilize the system's **libpca
 
 **[B.2 What you will get?](#B2)**
 
+
+## <a name="A">A. How to create autotools for this program</a>
+
 Create a Makefile.am and the source files according to the needs, in this example all source(s) placed into the root of the working directory.
 
 ```makefile
