@@ -493,7 +493,7 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
                     }
                     size_ip = IP_HL(ip)*4;
                     total_len = IP_TOTAL(ip->ip_len);
-                    printf(" VLAN Ethernet header size: %d\n", (int)sizeof(struct ether_vlan_header));
+                    printf(" VLAN Ethernet header size: %d\n", (int)size_ip);
                     printf(" Sizeof IP header: %d\n", (unsigned short)size_ip);
                     printf("       IP version: %d\n", ip->ip_v);
                     printf(" IP header length: %d\n", ip->ip_hl);
