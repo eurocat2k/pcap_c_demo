@@ -11,7 +11,7 @@ Small utility - programming example - about how to utilize the system's **libpca
 
 **[A.2 autoscan](#A2)**
 
-**[A.2.1] aclocal(#A21)**
+**[A.2.1 aclocal](#A21)**
 
 **[A.3 automake](#A3)**
 
@@ -87,9 +87,8 @@ AC_OUTPUT
 
 [back to top](#TOC)
 
-<a name="A21">
+<a name="A21"></a>
 ## A.2.1 aclocal
-</a>
 
 Execute **aclocal** before run **automake** with parameters.
 
