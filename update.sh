@@ -20,7 +20,7 @@ git_tag(){
 # usage
 Usage(){
     cat <<EOH
-      
+
       ${CMD} accepts one option - the message text for 'git commit'.
       Without this option, the script will apply a default message: '${MSG}'
 
