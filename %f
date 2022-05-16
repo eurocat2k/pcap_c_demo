@@ -1,0 +1,11 @@
+# pcap_c_demo installation manual
+
+## Installation using autotools
+
+1. Run first: aclocal
+2. Then execute: automake -caf --foreign
+3. Generate configure script: autoreconf -i[v]f
+4. Run ./configure [params]
+5. Ready to run Makefile
+
+-zg-
