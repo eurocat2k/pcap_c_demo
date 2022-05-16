@@ -499,10 +499,11 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
                     // we deal with IPv4 UPD MULTICAST frames now
                     if (ip->ip_p == IPPROTO_UDP) {
                         fspec.udp = 1;
-                        payload = packet + sizeof(struct sniff_ethernet) + sizeof(struct ip) + sizeof(struct sniff_udp);
+                        payload = packet + sizeof(struct ether_vlan_header) + sizeof(struct ip) + sizeof(struct udphdr);
                         size_payload = h->caplen - sizeof(struct pcap_pkthdr);  // cut off pcap header size from total length
-                        size_payload -= sizeof(struct ether_header);
+                        size_payload -= sizeof(struct ether_vlan_header);
                         size_payload -= sizeof(struct ip);
+                        printf("   -- payload length: %d\n", size_payload);
                         size_payload = IP_TOTAL(ip->ip_len) - sizeof(struct udphdr) - sizeof(struct ip);
                     }
                     // printout the payload in hex
