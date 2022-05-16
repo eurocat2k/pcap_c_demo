@@ -408,6 +408,7 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
             printf(" Ethernet IPv4 frame detected\n");
             if (ETHER_IS_MULTICAST(ethernet->ether_dhost)) {
                 fspec.eth_mcast_v4 = 1;
+                printf(" Ethernet IPv4 multicast frame detected\n");
             }
             // print src/dst MAC addresses
             printf(" ethernet src: %s\n", ether_ntoa((const struct ether_addr *)&ethernet->ether_shost));
@@ -439,7 +440,7 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
                 payload = packet + sizeof(struct ether_header) + sizeof(struct ip) + sizeof(struct udphdr);
 	            /* compute tcp payload (segment) size */
 	            size_payload = ntohs(ip->ip_len) - (size_ip + sizeof(struct udphdr));
-                payload = packet + ETHER_HDR_LEN + size_ip + sizeof(struct udphdr);
+                payload = packet + sizeof(struct ether_header) + size_ip + sizeof(struct udphdr);
                 udp = (struct udphdr *)(packet + sizeof(struct ether_header) + sizeof(struct ip));
                 srcport = (unsigned short)(udp->uh_sport>>8|udp->uh_sport<<8);
                 dstport = (unsigned short)(udp->uh_dport>>8|udp->uh_dport<<8);
@@ -470,6 +471,7 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
             vlan_ethernet = (struct ether_vlan_header*)packet;
             if (ETHER_IS_MULTICAST(vlan_ethernet->evl_dhost)) {
                 fspec.eth_vlan_mcast = 1;
+                printf(" Ethernet VN-tagged multicast frame detected\n");
             }
             // print src/dst MAC addresses
             printf(" VLAN ethernet src: %s\n", ether_ntoa((const struct ether_addr *)&vlan_ethernet->evl_shost));
@@ -503,11 +505,8 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
                     // we deal with IPv4 UPD MULTICAST frames now
                     if (ip->ip_p == IPPROTO_UDP) {
                         fspec.udp = 1;
-                        payload = packet + ETHER_HDR_LEN + size_ip + sizeof(struct udphdr);
-                        size_payload = h->caplen - sizeof(struct pcap_pkthdr);  // cut off pcap header size from total length
-                        size_payload -= sizeof(struct ether_vlan_header);
-                        size_payload -= sizeof(struct ip);
-                        size_payload = IP_TOTAL(ip->ip_len) - sizeof(struct udphdr) - sizeof(struct ip);
+                        payload = packet + sizeof(struct ether_vlan_header) + size_ip + sizeof(struct udphdr);
+                        size_payload = ntohs(ip->ip_len) - (size_ip + sizeof(struct udphdr));
                         udp = (struct udphdr *)(packet + sizeof(struct ether_vlan_header) + sizeof(struct ip));
                         srcport = (unsigned short)(udp->uh_sport>>8|udp->uh_sport<<8);
                         dstport = (unsigned short)(udp->uh_dport>>8|udp->uh_dport<<8);
