@@ -2,7 +2,7 @@
 
 Small utility - programming example - about how to utilize the system's **libpcap** library.
 
-<a name=TOC"></a>
+<a name="TOC"></a>
 ## Table of contents
 
 **[A. How to create autotools for this program](#A)**
