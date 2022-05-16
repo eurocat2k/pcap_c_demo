@@ -83,3 +83,4 @@ config.h
 configure
 m4/
 dist/
+test/
