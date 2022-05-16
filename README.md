@@ -131,7 +131,7 @@ You <u>*shall*</u> specify the device name to be used for capturing network pack
 
 The ***filter_text*** argument[s] is optional, using that, you can refine the pacap engine work filtering out those packtes which are not matching to the filtering criteria[s]. *Consult with your system's manuals about pcap-filters(7) and how to use them.*
 
-**Note!** The access to the ***bpf(4)*** device - aka. Berkley Packet Filter device, can be found in your system's device subdirecory as **/dev/bpf*** - requires special privileges - most probably ***root*** access rights. If you aware of access and use *pcap* as ***root***, you can give specific group or user to have access rights to the device - consult your system's manual to share access privileges user and/or group wise. On FreeBSD you can edit ***/etc/devfs.conf*** defining which user and or group have access and how can access the device.
+**Note!** The access to the ***bpf(4)*** device - aka. Berkley Packet Filter device, can be found in your system's device subdirecory as **/dev/bpf*** - requires special privileges - most probably ***root*** access rights. If you aware of access and use *pcap* as ***root***, you can adjust specific group or user to have access rights to the device - consult your system's manual to share access privileges user and/or group wise. On FreeBSD you can edit ***/etc/devfs.conf*** defining which user and or group have access and how can access the device.
 
 If you have not got the proper access rights the application will return with error.
 
