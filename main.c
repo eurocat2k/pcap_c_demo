@@ -388,6 +388,8 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
     unsigned int size_payload = 0;          /* sizeof payload */
     unsigned int total_len = h->caplen - sizeof(struct pcap_pkthdr);    // total packet size without PCAP header
     unsigned short ether_type = 0;          /* the ethernet type */
+    unsigned short vlan_type = 0;           /* VLAN ethernet type */
+    unsigned short vlan_tag = 0;            /* VLAN tag */
     // 
     fspec.dlt_eth = 1;  // this is ethernet frame
     // 
@@ -464,8 +466,10 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
                 fspec.eth_vlan_mcast = 1;
             }
             // print src/dst MAC addresses
-            printf(" ethernet src: %s\n", ether_ntoa((const struct ether_addr *)&vlan_ethernet->evl_shost));
-            printf(" ethernet dst: %s\n", ether_ntoa((const struct ether_addr *)&vlan_ethernet->evl_dhost));
+            printf(" VLAN ethernet src: %s\n", ether_ntoa((const struct ether_addr *)&vlan_ethernet->evl_shost));
+            printf(" VLAN ethernet dst: %s\n", ether_ntoa((const struct ether_addr *)&vlan_ethernet->evl_dhost));
+            vlan_tag = (unsigned short)((vlan_ethernet->evl_tag >> 8) | (vlan_ethernet->evl_tag << 8));
+            printf(" VLAN tag: %d\n", vlan_tag);
             // 
             hexdump("packet", (const void *)packet, (size_t)h->caplen); // print entire pcap packet - without pcap header
         break;
