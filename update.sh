@@ -53,7 +53,7 @@ do
                     cat << EOR
 
       ERROR: missing parameter (The message text is mandatory for this option!)
-    
+
 EOR
                     exit 1
                 fi
@@ -76,7 +76,7 @@ EOR
 cat << EOR
 
       ERROR: missing parameter (The message text is mandatory for this option!)
-    
+
 EOR
                     exit 1
                 fi
@@ -99,7 +99,7 @@ EOR
                     cat << EOR
 
       ERROR: missing parameter (The message text is mandatory for this option!)
-    
+
 EOR
                     exit 1
                 fi

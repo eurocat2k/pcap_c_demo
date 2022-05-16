@@ -4,7 +4,7 @@ BRANCH=${DEFAULT_BRANCH}
 CMD=$(basename $0)
 usage(){
     cat << EOT
-      
+
       Refresh local repository from github.
       The script optionally accepts one argument: the name of the repository barnch.
       Default branch is '${DEFAULT_BRANCH}'.
@@ -13,9 +13,9 @@ usage(){
 
       usage:
           $ ${CMD} -b [reponame]
-        
+
         or
-        
+
           $ ${CMD} --branch [reponame]
 
 EOT
@@ -34,7 +34,7 @@ do
             if [ -z ${BRANCH} ]
             then
                 cat << EOR
-      
+ 
       ERROR: ${ARG} requires string parameter as the name of repository branch.
 
       Mandatory argument is missing. See usage (-h or --help) for further information.
