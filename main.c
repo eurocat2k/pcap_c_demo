@@ -517,7 +517,7 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
                 break;
             }
             // 
-            hexdump("packet", (const void *)packet, (size_t)h->caplen); // print entire pcap packet - without pcap header
+            // hexdump("packet", (const void *)packet, (size_t)h->caplen); // print entire pcap packet - without pcap header
         break;
     }
     
