@@ -2,7 +2,7 @@
 
 Small utility - programming example - about how to utilize the system's **libpcap** library.
 
-<a name=TOP"></a>
+<a name=TOC"></a>
 ## Table of contents
 
 **[A. How to create autotools for this program](#A)**
@@ -37,7 +37,7 @@ Create a Makefile.am and the source files according to the needs, in this exampl
   distdir = $(prefix)
 ```
 
-[back to top](#TOP)
+[back to top](#TOC)
 
 <a name="A2"></a>
 ## A.2 autoscan
@@ -83,7 +83,7 @@ AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
 ```
 
-[back to top](#TOP)
+[back to top](#TOC)
 
 <a name="A3"></a>
 ## A.3 automake
@@ -98,7 +98,7 @@ Before we execute **autoreconf -ivf** - to be sure avoiding error messages - we 
 automake -caf --foreign
 ```
 
-[back to top](#TOP)
+[back to top](#TOC)
 
 <a name="A4"></a>
 ## A.4 autoreconf
@@ -110,7 +110,7 @@ autoreconf -ivf
 
 If no error occurres, then we will have our Makefile ready to deal with our codes.
 
-[back to top](#TOP)
+[back to top](#TOC)
 
 <a name="B"></a>
 ## B. pcapdemo: about the pcapdemo utility
@@ -136,11 +136,11 @@ The ***filter_text*** argument[s] is optional, using that, you can refine the pa
 
 If you have not got the proper access rights the application will return with error.
 
-[back to top](#TOP)
+[back to top](#TOC)
 
 <a name="B2"></a>
 ## B.2 What you will get?
 
 When you run the compiled and linked program, you will get some output - indicating that something is happening on the network your machine is connected. The code first of all will try to identify the flavour of the packages - let us be specific: frames. Dealing with the ethernet frames - depending on what type of DLT exists on the physical layer. Most probably it's going to be DLT_EN10MB, which is good for ethernets in real or virtual environments. Then the code will deal with upper layers on the ISO/OSI stack - I mean the layers above the datalink layer. When I worked with the libpcap at the first time I had to have tool which sniffs for UDP multicast transmits from a network segment which was not in the same subnet as my machine was connected. I had a spare network card which was linked directly to the switch' port on the other subnet - nowadays network guys would call that SPAN-ning - using that card and the libpcap I've got some view into the "secret" data transmits between logically linked nodes without "bother" their administrators to hack a spy-node into the system's strict configuration schemas. As I said before I was looking for udp multicast data. Therefore the next layer - or the next frame I had to deal with was the IP where you get address info (*source and destination*). This info was essential to be able to filter out those traffic which was not belonging to the multicast group address I was looking for, but still matched to UDP protocol and address type of multicast. The data streamed on different ports - having the same multicast address - depending on the role applied by the processing nodes. 
 
-[back to top](#TOP)
+[back to top](#TOC)
