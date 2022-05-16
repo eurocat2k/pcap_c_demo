@@ -436,11 +436,16 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
             // we deal with IPv4 UPD MULTICAST frames now
             if (ip->ip_p == IPPROTO_UDP) {
                 fspec.udp = 1;
-                payload = packet + sizeof(struct sniff_ethernet) + sizeof(struct ip) + sizeof(struct sniff_udp);
+                payload = packet + sizeof(struct ether_header) + sizeof(struct ip) + sizeof(struct sniff_udp);
                 size_payload = h->caplen - sizeof(struct pcap_pkthdr);  // cut off pcap header size from total length
                 size_payload -= sizeof(struct ether_header);
                 size_payload -= sizeof(struct ip);
                 size_payload = IP_TOTAL(ip->ip_len) - sizeof(struct udphdr) - sizeof(struct ip);
+                udp = (struct udphdr *)(packet + sizeof(struct ether_header) + sizeof(struct ip));
+                srcport = udp->uh_sport;
+                dstport = udp->uh_dport;
+                printf(" UDP src port: %d\n", srcport);
+                printf(" UDP dst port: %d\n", dstport);
             }
             // printout the payload in hex
             printf("   payload length: %d\n", size_payload);
@@ -504,6 +509,11 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
                         size_payload -= sizeof(struct ether_vlan_header);
                         size_payload -= sizeof(struct ip);
                         size_payload = IP_TOTAL(ip->ip_len) - sizeof(struct udphdr) - sizeof(struct ip);
+                        udp = (struct udphdr *)(packet + sizeof(struct ether_vlan_header) + sizeof(struct ip));
+                        srcport = udp->uh_sport;
+                        dstport = udp->uh_dport;
+                        printf(" UDP src port: %d\n", srcport);
+                        printf(" UDP dst port: %d\n", dstport);
                     }
                     // printout the payload in hex
                     printf("   payload length: %d\n", size_payload);
