@@ -506,7 +506,7 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
                     if (ip->ip_p == IPPROTO_UDP) {
                         fspec.udp = 1;
                         payload = packet + sizeof(struct ether_vlan_header) + size_ip + sizeof(struct udphdr);
-                        size_payload = total_len - (ETHER_HDR_LEN + sizeof(struct ether_vlan_header) + size_ip + sizeof(struct udphdr));
+                        size_payload = htons(ip->ip_hl) - (sizeof(struct ether_vlan_header) + size_ip + sizeof(struct udphdr));
                         udp = (struct udphdr *)(packet + sizeof(struct ether_vlan_header) + sizeof(struct ip));
                         srcport = (unsigned short)(udp->uh_sport>>8|udp->uh_sport<<8);
                         dstport = (unsigned short)(udp->uh_dport>>8|udp->uh_dport<<8);
