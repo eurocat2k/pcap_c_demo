@@ -442,8 +442,8 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
                 size_payload -= sizeof(struct ip);
                 size_payload = IP_TOTAL(ip->ip_len) - sizeof(struct udphdr) - sizeof(struct ip);
                 udp = (struct udphdr *)(packet + sizeof(struct ether_header) + sizeof(struct ip));
-                srcport = udp->uh_sport;
-                dstport = udp->uh_dport;
+                srcport = (unsigned short)(udp->uh_sport>>8|udp->uh_sport<<8);
+                dstport = (unsigned short)(udp->uh_dport>>8|udp->uh_dport<<8);
                 printf(" UDP src port: %d\n", srcport);
                 printf(" UDP dst port: %d\n", dstport);
             }
@@ -510,8 +510,8 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
                         size_payload -= sizeof(struct ip);
                         size_payload = IP_TOTAL(ip->ip_len) - sizeof(struct udphdr) - sizeof(struct ip);
                         udp = (struct udphdr *)(packet + sizeof(struct ether_vlan_header) + sizeof(struct ip));
-                        srcport = udp->uh_sport;
-                        dstport = udp->uh_dport;
+                        srcport = (unsigned short)(udp->uh_sport>>8|udp->uh_sport<<8);
+                        dstport = (unsigned short)(udp->uh_dport>>8|udp->uh_dport<<8);
                         printf(" UDP src port: %d\n", srcport);
                         printf(" UDP dst port: %d\n", dstport);
                     }
