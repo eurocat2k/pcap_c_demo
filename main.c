@@ -491,6 +491,7 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
                     }
                     size_ip = IP_HL(ip)*4;
                     total_len = IP_TOTAL(ip->ip_len);
+                    printf(" VN-tagged ethernet size: %d\n", (int)sizeof(vlan_ethernet));
                     printf(" Sizeof IP header: %d\n", (unsigned short)size_ip);
                     printf("       IP version: %d\n", ip->ip_v);
                     printf(" IP header length: %d\n", ip->ip_hl);
