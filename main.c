@@ -414,18 +414,17 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
             printf(" ethernet dst: %s\n", ether_ntoa((const struct ether_addr *)&ethernet->ether_dhost));
             // get source and dst IP address, type and protocol
             // locate IP header first
-            ip = (struct ip*)(packet + sizeof(struct ether_header));
+            ip = (struct ip*)(packet + ETHER_HDR_LEN);
             //  check IP header validity
             if (ip->ip_hl < 5) {
                 printf(" Invalid IP header, return without further processing.\n");
                 return;
             }
-            size_ip = ip->ip_hl*4;
-            total_len = IP_TOTAL(ip->ip_len);
+            size_ip = IP_HL(ip)*4;
             printf(" Sizeof IP header: %d\n", (unsigned short)size_ip);
             printf("       IP version: %d\n", ip->ip_v);
             printf(" IP header length: %d\n", ip->ip_hl);
-            printf("  IP total length: %d\n", IP_TOTAL(ip->ip_len));
+            printf("  IP total length: %d\n", size_ip);
             printf("   IP src address: %s\n", inet_ntoa(ip->ip_src));
             printf("   IP dst address: %s\n", inet_ntoa(ip->ip_dst));
             printf(" IP protocol type: %d\n", ip->ip_p);
@@ -436,11 +435,11 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
             // we deal with IPv4 UPD MULTICAST frames now
             if (ip->ip_p == IPPROTO_UDP) {
                 fspec.udp = 1;
-                payload = packet + sizeof(struct ether_header) + sizeof(struct ip) + sizeof(struct sniff_udp);
-                size_payload = h->caplen - sizeof(struct pcap_pkthdr);  // cut off pcap header size from total length
-                size_payload -= sizeof(struct ether_header);
-                size_payload -= sizeof(struct ip);
-                size_payload = IP_TOTAL(ip->ip_len) - sizeof(struct udphdr) - sizeof(struct ip);
+                /* define payload pointer */
+                payload = packet + sizeof(struct ether_header) + sizeof(struct ip) + sizeof(struct udphdr);
+	            /* compute tcp payload (segment) size */
+	            size_payload = ntohs(ip->ip_len) - (size_ip + sizeof(struct udphdr));
+                payload = packet + ETHER_HDR_LEN + size_ip + sizeof(struct udphdr);
                 udp = (struct udphdr *)(packet + sizeof(struct ether_header) + sizeof(struct ip));
                 srcport = (unsigned short)(udp->uh_sport>>8|udp->uh_sport<<8);
                 dstport = (unsigned short)(udp->uh_dport>>8|udp->uh_dport<<8);
@@ -488,12 +487,12 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
                         printf(" Invalid IP header, return without further processing.\n");
                         return;
                     }
-                    size_ip = ip->ip_hl*4;
+                    size_ip = IP_HL(ip)*4;
                     total_len = IP_TOTAL(ip->ip_len);
                     printf(" Sizeof IP header: %d\n", (unsigned short)size_ip);
                     printf("       IP version: %d\n", ip->ip_v);
                     printf(" IP header length: %d\n", ip->ip_hl);
-                    printf("  IP total length: %d\n", IP_TOTAL(ip->ip_len));
+                    printf("  IP total length: %d\n", size_ip);
                     printf("   IP src address: %s\n", inet_ntoa(ip->ip_src));
                     printf("   IP dst address: %s\n", inet_ntoa(ip->ip_dst));
                     printf(" IP protocol type: %d\n", ip->ip_p);
@@ -504,7 +503,7 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
                     // we deal with IPv4 UPD MULTICAST frames now
                     if (ip->ip_p == IPPROTO_UDP) {
                         fspec.udp = 1;
-                        payload = packet + sizeof(struct ether_vlan_header) + sizeof(struct ip) + sizeof(struct udphdr);
+                        payload = packet + ETHER_HDR_LEN + size_ip + sizeof(struct udphdr);
                         size_payload = h->caplen - sizeof(struct pcap_pkthdr);  // cut off pcap header size from total length
                         size_payload -= sizeof(struct ether_vlan_header);
                         size_payload -= sizeof(struct ip);

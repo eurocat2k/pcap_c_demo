@@ -64,11 +64,11 @@ struct sniff_ip {
 };
 
 #ifndef IP_HL
-#define IP_HL(ip)               (((ip)->ip_vhl) & 0x0f)
+#define IP_HL(ip)               (((ip)->ip_hl) & 0x0f)
 #endif  //!IP_HL
 
 #ifndef IP_V
-#define IP_V(ip)                (((ip)->ip_vhl) >> 4)
+#define IP_V(ip)                (((ip)->ip_v) >> 4)
 #endif  //!IP_V
 
 #ifndef IP_TOTAL
