@@ -11,6 +11,8 @@ Small utility - programming example - about how to utilize the system's **libpca
 
 **[A.2 autoscan](#A2)**
 
+**[A.2.1] aclocal(#A21)**
+
 **[A.3 automake](#A3)**
 
 **[A.4 autoreconf](#A4)**
@@ -82,6 +84,14 @@ AC_TYPE_SIZE_T
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
 ```
+
+[back to top](#TOC)
+
+<a name="A21">
+## A.2.1 aclocal
+</a>
+
+Execute **aclocal** before run **automake** with parameters.
 
 [back to top](#TOC)
 
