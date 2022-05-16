@@ -38,9 +38,8 @@ Create a Makefile.am and the source files according to the needs, in this exampl
 
 [back to top](#TOP)
 
-<a name="A2">
+<a name="A2"></a>
 ## A.2 autoscan
-</a>
 
 Execute **autoscan** utility
 ```bash
