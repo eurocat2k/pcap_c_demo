@@ -472,7 +472,7 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
             printf(" VLAN ethernet dst: %s\n", ether_ntoa((const struct ether_addr *)&vlan_ethernet->evl_dhost));
             vlan_tag = (unsigned short)((vlan_ethernet->evl_tag >> 8) | (vlan_ethernet->evl_tag << 8));
             printf("          VLAN tag: %d [0x%04X]\n", vlan_tag, vlan_tag);
-            vlan_proto = (unsigned short)(vlan_ethernet->evl_encap_proto>>8|vlan_ethernet->evl_encap_proto<<8);
+            vlan_proto = (unsigned short)(vlan_ethernet->evl_proto>>8|vlan_ethernet->evl_proto<<8);
             printf("        VLAN proto: %d [0x%04X]\n", vlan_proto, vlan_proto);
             vlan_encap_proto = (unsigned short)(vlan_ethernet->evl_encap_proto>>8|vlan_ethernet->evl_encap_proto<<8);
             printf(" VLAN encapsulation protocol: %d [0x%04X]\n", vlan_encap_proto, vlan_encap_proto);
