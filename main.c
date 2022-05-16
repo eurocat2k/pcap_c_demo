@@ -446,6 +446,7 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
         printf("   IP src address: %s\n", inet_ntoa(ip->ip_src));
         printf("   IP dst address: %s\n", inet_ntoa(ip->ip_dst));
         printf(" IP protocol type: %d\n", ip->ip_p);
+        printf("           IP TTL: %d\n", (unsigned short)ip->ip_ttl);
         if (is_ipv4_multicast(inet_ntoa(ip->ip_dst))) {
             fspec.ip_mcast = 1;
         }
