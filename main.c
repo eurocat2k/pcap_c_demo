@@ -408,16 +408,6 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
             // print src/dst MAC addresses
             printf(" ethernet src: %s\n", ether_ntoa((const struct ether_addr *)&ethernet->ether_shost));
             printf(" ethernet dst: %s\n", ether_ntoa((const struct ether_addr *)&ethernet->ether_dhost));
-        break;
-        case ETHERTYPE_IPV6: // TODO!
-            fspec.eth_ipv6 = 1;
-            printf(" Ethernet IPv6 frame detected\n");
-            if (ETHER_IS_IPV6_MULTICAST(ethernet->ether_dhost)) {
-                fspec.eth_mcast_v6 = 1;
-            }
-            // print src/dst MAC addresses
-            printf(" ethernet src: %s\n", ether_ntoa((const struct ether_addr *)&ethernet->ether_shost));
-            printf(" ethernet dst: %s\n", ether_ntoa((const struct ether_addr *)&ethernet->ether_dhost));
             // get source and dst IP address, type and protocol
             // locate IP header first
             ip = (struct ip*)(packet + sizeof(struct ether_header));
@@ -451,6 +441,17 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
             // printout the payload in hex
             printf("   payload length: %d\n", size_payload);
             hexdump("payload", (const void *)(packet + sizeof(struct ether_header) + sizeof(struct ip) + sizeof(struct udphdr)), (size_t)size_payload);
+            // 
+        break;
+        case ETHERTYPE_IPV6: // TODO!
+            fspec.eth_ipv6 = 1;
+            printf(" Ethernet IPv6 frame detected\n");
+            if (ETHER_IS_IPV6_MULTICAST(ethernet->ether_dhost)) {
+                fspec.eth_mcast_v6 = 1;
+            }
+            // print src/dst MAC addresses
+            printf(" ethernet src: %s\n", ether_ntoa((const struct ether_addr *)&ethernet->ether_shost));
+            printf(" ethernet dst: %s\n", ether_ntoa((const struct ether_addr *)&ethernet->ether_dhost));
             // 
         break;
         case ETHERTYPE_VLAN:
