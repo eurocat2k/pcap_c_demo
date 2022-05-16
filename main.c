@@ -453,6 +453,8 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
             printf(" ethernet src: %s\n", ether_ntoa((const struct ether_addr *)&ethernet->ether_shost));
             printf(" ethernet dst: %s\n", ether_ntoa((const struct ether_addr *)&ethernet->ether_dhost));
             // 
+            hexdump("packet", (const void *)packet, (size_t)h->caplen); // print entire pcap packet - without pcap header
+            // 
         break;
         case ETHERTYPE_VLAN:
             fspec.eth_vlan = 1;
@@ -464,10 +466,12 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
             // print src/dst MAC addresses
             printf(" ethernet src: %s\n", ether_ntoa((const struct ether_addr *)&vlan_ethernet->evl_shost));
             printf(" ethernet dst: %s\n", ether_ntoa((const struct ether_addr *)&vlan_ethernet->evl_dhost));
+            // 
+            hexdump("packet", (const void *)packet, (size_t)h->caplen); // print entire pcap packet - without pcap header
         break;
     }
     
-    hexdump("packet", (const void *)packet, (size_t)h->caplen); // print entire pcap packet - without pcap header
+    // hexdump("packet", (const void *)packet, (size_t)h->caplen); // print entire pcap packet - without pcap header
     
     return;
 }
