@@ -2,8 +2,6 @@
 
 Small utility - programming example - about how to utilize the system's **libpcap** library.
 
-## added git helpers
-
 **[A. How to create autotools for this program](#A)**
 
 **[A.1 Preparation](#a1-preparation)**
@@ -20,9 +18,6 @@ Small utility - programming example - about how to utilize the system's **libpca
 
 **[B.2 What you will get?](#B2)**
 
-## added git helpers
-
-## added git helpers
 Create a Makefile.am and the source files according to the needs, in this example all source(s) placed into the root of the working directory.
 
 ```makefile
@@ -35,7 +30,6 @@ Create a Makefile.am and the source files according to the needs, in this exampl
 
 [back to top](#TOP)
 
-## added git helpers
 Execute **autoscan** utility
 ```bash
 autoscan -I .
@@ -79,7 +73,6 @@ AC_OUTPUT
 
 [back to top](#TOP)
 
-## added git helpers
 We have to add **AM_INIT_AUTOMAKE** to the  ***.scan*** file at the location right after **AC_CONFIG_HEADERS([config.h])**, then copy or rename the ***configure.scan*** file to **configure.ac**.
 
 *We can add version number, and package name, bug-report address to the package. All those are up to you though.*
@@ -92,7 +85,6 @@ automake -caf --foreign
 
 [back to top](#TOP)
 
-## added git helpers
 After executing previous command above, then we can call the next utility to generate our **configure** script.
 ```bash
 autoreconf -ivf
@@ -102,9 +94,7 @@ If no error occurres, then we will have our Makefile ready to deal with our code
 
 [back to top](#TOP)
 
-## added git helpers
 
-## added git helpers
 The small utility sniffs network packages using **libpcap** and **bpf(4)** accepts two parameters at the command prompt. See usage below:
 ```bash
 pcapdemo [-h|--help] [-i|--if <name> [filter_text]]
@@ -124,6 +114,7 @@ If you have not got the proper access rights the application will return with er
 
 [back to top](#TOP)
 
-## added git helpers
 
 When you run the compiled and linked program, you will get some output - signing that something is happening on the network your machine is connected. The code first of all will try to identify the flavour of the packages - let us be specific: frames. Dealing with the ethernet frames - depending on what type of DLT exists on the physical layer. Most probably it's going to be ETH10BT, which is good for ethernets in real or virtual environments. Then the code will deal with upper layers on the ISO/OSI stack - I mean the layers above the datalink layer. When I worked with the libpcap at the first time I had to have tool which sniffs for UDP multicast transmits from a network segment which was not in the same subnet as my machine was connected. I had a spare network card which was linked directly to the switch' port on the other subnet - nowadays network guys would call that SPAN-ning - using that card and the libpcap I've got some view into the "secret" data transmits between logically linked nodes without "bother" their administrators to hack a spy-node into the system's strict configuration schemas. As I said before I was looking for udp multicast data. Therefore the next layer - or the next frame I had to deal with was the IP where you get address info (*source and destination*). This info was essential to be able to filter out those traffic which was not belonging to the multicast group address I was looking for, but still matched to UDP protocol and address type of multicast. The data streamed on different ports - having the same multicast address - depending on the role applied by the processing nodes. 
+
+[back to top](#TOP)
