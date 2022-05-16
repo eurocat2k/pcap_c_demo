@@ -21,6 +21,14 @@ struct sniff_ethernet {
         u_short ether_type;                     /* IP? ARP? RARP? etc */
 };
 
+#ifndef CHAR_BITS
+#define CHAR_BITS (8)
+#endif
+
+#ifndef ETHER_TYPE
+#define ETHER_TYPE(type) (unsigned short)(((type) >> (CHAR_BITS)) | ((type) << (CHAR_BITS)))
+#endif
+
 typedef struct sniff_ipv6 {
   unsigned char *pkt;
   int pkt_len;
@@ -62,6 +70,10 @@ struct sniff_ip {
 #ifndef IP_V
 #define IP_V(ip)                (((ip)->ip_vhl) >> 4)
 #endif  //!IP_V
+
+#ifndef IP_TOTAL
+#define IP_TOTAL(v) (unsigned short)(((v)>>8) | ((v)<<8))
+#endif // !IP_TOTAL
 
 typedef u_int tcp_seq;
 

@@ -42,6 +42,7 @@ char *trim(char *s);
 void hexdump(const char*title, const void* data, size_t size);
 void got_packet(u_char *user, const struct pcap_pkthdr *h,const u_char *byte);
 void sig_handler(int signal);
+bool is_ipv4_multicast(const char* ipstr);
 
 #ifndef PCAP_BUF_SIZE
 #define PCAP_BUF_SIZE (1600)
@@ -295,13 +296,10 @@ int main(int argc, char **argv) {
             for (int i = 0; i < KEV_SIZE; i++) {
                 int ev_id = events[i].ident;
                 if (ev_id == pcap_fd) {
-                    pcap_dispatch(phandle, -1, got_packet, NULL);
-                    // pcap_next(phandle, &pkh);
-                    // printf("Something was wricaptured on '%s'\n", device);
-                    // if (NULL != pkh) {
-                    //     printf(" pkh->caplen: %d\n", pkh->caplen);
-                    //     printf("    pkh->len: %d\n", pkh->len);
-                    // }
+                    if (pcap_datalink(phandle) == DLT_EN10MB) {
+                        //  we work with ethernet frames now
+                        pcap_dispatch(phandle, -1, got_packet, NULL);
+                    }
                 }
             }
         }
@@ -358,8 +356,19 @@ char *trim(char *s) {
  * @retval None
  */
 void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet){
+    struct {
+        uint8_t dlt_eth: 1;     // ethernet or not
+        uint8_t eth_mcast_v4: 1;    // is multicast v4 ethernet
+        uint8_t eth_mcast_v6: 1;    // is multicast v6 ethernet
+        uint8_t eth_broadcast: 1;   // is broadcast address
+        uint8_t ipv4: 1;    // is ipv4
+        uint8_t ipv6: 1;    // is ipv6
+        uint8_t ip_mcast;   // is valid group - call is_ipv4_multicast(...)
+        uint8_t udp: 1;     // is udp
+        uint8_t tcp: 1;     // is tcp
+    } fspec = {0};
     const struct sniff_ethernet *ethernet;  /* The ethernet header [1] */
-    const struct sniff_ip *ip;              /* The IP header */
+    const struct ip *ip;                    /* The IP header */
     const struct sniff_tcp *tcp;            /* The TCP header */
     const struct sniff_udp *udp;            /* The UDP header */
     const unsigned char *payload;                    /* Packet payload */
@@ -370,18 +379,94 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
     int size_ip;
     int size_tcp;
     int size_udp;
-    int size_payload = 0;
+    unsigned int size_payload = 0;
+    unsigned int total_len = h->caplen - sizeof(struct pcap_pkthdr);
+    unsigned short ether_type = 0;
+    // 
+    fspec.dlt_eth = 1;  // this is ethernet frame
+    // 
+    // print out PCAP header info
+    printf("         caption size: %d\n", h->caplen);
+    printf("                  len: %d\n", h->len);
+    printf("  ethernet frame size: %d\n", total_len);
+    ethernet = (struct sniff_ethernet*)(packet);    // we do expect ethernet frames
+    // get ethernet dst and src addresses - aka. MAC addresses
+    if (ETHER_IS_MULTICAST(ethernet->ether_dhost) || ETHER_IS_MULTICAST(ethernet->ether_shost)) {
+        printf(" Ethernet IPv4 multicast frame detected\n");
+        fspec.eth_mcast_v4 = 1; // v4 mcast ethernet address
+    } else if (ETHER_IS_IPV6_MULTICAST(ethernet->ether_dhost) || ETHER_IS_IPV6_MULTICAST(ethernet->ether_shost)) {
+        printf(" Ethernet IPv6 multicast frame detected\n");
+        fspec.eth_mcast_v6 = 1; // v6 mcast ethernet address
+    } else if (ETHER_IS_BROADCAST(ethernet->ether_dhost) || ETHER_IS_BROADCAST(ethernet->ether_shost)) {
+        printf(" Ethernet broadcast frame detected\n");
+        fspec.eth_broadcast = 1;
+    } else {
+        printf(" OTHER type frame detected\n");
+    }
+    // print src/dst MAC addresses
+    printf(" ethernet src: %s\n", ether_ntoa((const struct ether_addr *)&ethernet->ether_shost));
+    printf(" ethernet dst: %s\n", ether_ntoa((const struct ether_addr *)&ethernet->ether_dhost));
+    // detect ethernet type
+    ether_type = ETHER_TYPE(ethernet->ether_type);
+    switch(ether_type) {
+        case ETHERTYPE_IP:
+            printf(" ethernet type: %s [0x%04X]\n", "IPv4", ether_type);
+            fspec.ipv4 = 1;
+        break;
+        case ETHERTYPE_AARP:
+            printf(" ethernet type: %s [0x%04X]\n", "ARP", ether_type);
+        break;
+        case ETHERTYPE_IPV6:
+            printf(" ethernet type: %s [0x%04X]\n", "IPv6", ether_type);
+            fspec.ipv6 = 1;
+        break;
+        case ETHERTYPE_REVARP:
+            printf(" ethernet type: %s [0x%04X]\n", "RARP", ether_type);
+        break;
+        default:
+            printf(" ethernet type: 0x%04X\n", ether_type);
+        break;
+    }
+    // we deal with IP frames now
+    if (ether_type == ETHERTYPE_IP) {
+        // get source and dst IP address, type and protocol
+        // locate IP header first
+        ip = (struct ip*)(packet + sizeof(struct ether_header));
+        //  check IP header validity
+        if (ip->ip_hl < 5) {
+            printf(" Invalid IP header, return without further processing.\n");
+            return;
+        }
+        size_ip = ip->ip_hl*4;
+        total_len = IP_TOTAL(ip->ip_len);
+        printf(" Sizeof IP header: %d\n", (unsigned short)size_ip);
+        printf("       IP version: %d\n", ip->ip_v);
+        printf(" IP header length: %d\n", ip->ip_hl);
+        printf("  IP total length: %d\n", IP_TOTAL(ip->ip_len));
+        printf("   IP src address: %s\n", inet_ntoa(ip->ip_src));
+        printf("   IP dst address: %s\n", inet_ntoa(ip->ip_dst));
+        printf(" IP protocol type: %d\n", ip->ip_p);
+        if (is_ipv4_multicast(inet_ntoa(ip->ip_dst))) {
+            fspec.ip_mcast = 1;
+        }
+        // 
+    }
+    // we deal with IPv4 UPD MULTICAST frames now
+    if (ether_type == ETHERTYPE_IP && (ip->ip_p == IPPROTO_UDP)) {
+        fspec.udp = 1;
+        payload = packet + sizeof(struct sniff_ethernet) + sizeof(struct ip) + sizeof(struct sniff_udp);
+        size_payload = h->caplen - sizeof(struct pcap_pkthdr);  // cut off pcap header size from total length
+        size_payload -= sizeof(struct ether_header);
+        size_payload -= sizeof(struct ip);
+        size_payload = IP_TOTAL(ip->ip_len) - sizeof(struct udphdr) - sizeof(struct ip);
+    }
+    
+    printf("   payload length: %d\n", size_payload);
+    
+    hexdump("packet", (const void *)packet, (size_t)h->caplen); // print entire pcap packet - without pcap header
 
-    printf(" caption size: %d\n", h->caplen);
-    printf("          len: %d\n", h->len);
-    hexdump(NULL, (const void *)packet, (size_t)h->caplen);
-
-    ethernet = (struct sniff_ethernet*)(packet);
-    struct ip *iph = (struct ip*)(packet + sizeof(struct ether_header));
-    size_ip = iph->ip_hl*4;
-    printf(" Sizeof IP header: %d\n", (unsigned short)size_ip);
-    // printf(" Version of packet: %d\n", (unsigned short)iph->ip_v);
-    printf("       IP version: %d\n", (int)iph->ip_v);
+    // printout the payload in hex
+    hexdump("payload", (const void *)(packet + sizeof(struct ether_header) + sizeof(struct ip) + sizeof(struct udphdr)), (size_t)size_payload);
     
     return;
 }
@@ -427,6 +512,12 @@ void hexdump(const char*title _U_, const void* data, size_t size) {
 		fprintf(stdout, "END %s\n", title);
 	}
 }
+/**
+ * @name   sig_handler
+ * @note   executes this code at event of signal
+ * @param  int sig - signal number
+ * @retval None
+ */
 void sig_handler(int sig) {
     switch(sig) {
         default:
@@ -440,4 +531,33 @@ void sig_handler(int sig) {
             exit(0);
         break;
     }
+}
+/**
+ * @name   is_ipv4_multicast
+ * @note   validates IPv4 address, checking if it falls into the range of MCAST address pool.
+ *         we will check only first byte of IPv4 and if it is in range from 224 to 239, then 
+ *         it shoul represent multicast IP.
+ * @param  const char* ip - the IP address in "x.x.x.x" for in case of IPv4
+ * @retval true if valid otherwise false
+ */
+bool is_ipv4_multicast(const char* ipstr){
+#ifndef IPV4_ADDR_STR_MAX_LEN
+#define IPV4_ADDR_STR_MAX_LEN   (15)    // NNN.NNN.NNN.NNN
+#endif
+    int len = 0;                // 
+    struct in_addr addr = {0};  // inet_aton conversion destination object
+    char *ip_val = NULL;        // casted struct in_addr pointer
+    if (NULL != ipstr) {
+        len = strlen(ipstr);
+        len = (len <= IPV4_ADDR_STR_MAX_LEN) ? len : IPV4_ADDR_STR_MAX_LEN; // do not allow longer string other than valid IPv4 address string!
+        if (inet_aton(ipstr, (struct in_addr *)&addr)) {
+            // string is success fully validated and converted
+            ip_val = (char *)&addr;
+            uint8_t octet = ip_val[0];
+            if(octet >=  224 && octet <= 239){
+                return true;
+            }
+        }
+    }
+    return false;
 }
