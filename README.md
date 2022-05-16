@@ -19,7 +19,7 @@ Small utility - programming example - about how to utilize the system's **libpca
 **[B.2 What you will get?](#B2)**
 
 <a name="A">
-## updated remadme
+## A. How to create autotools for this program
 </a>
 
 ## updated remadme
