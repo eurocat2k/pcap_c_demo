@@ -492,7 +492,7 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
                         return;
                     }
                     size_ip = IP_HL(ip)*4;
-                    total_len = IP_TOTAL(ip->ip_len);
+                    total_len = size_ip;
                     printf(" VLAN Ethernet header size: %d\n", (int)size_ip);
                     printf(" Sizeof IP header: %d\n", (unsigned short)size_ip);
                     printf("       IP version: %d\n", ip->ip_v);
@@ -509,7 +509,7 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
                     if (ip->ip_p == IPPROTO_UDP) {
                         fspec.udp = 1;
                         payload = packet + sizeof(struct ether_vlan_header) + size_ip + sizeof(struct udphdr);
-                        size_payload = htons(ip->ip_hl) - (size_ip + sizeof(struct udphdr));
+                        size_payload = htons(ip->ip_len) - (size_ip + sizeof(struct udphdr));
                         udp = (struct udphdr *)(packet + sizeof(struct ether_vlan_header) + sizeof(struct ip));
                         srcport = (unsigned short)(udp->uh_sport>>8|udp->uh_sport<<8);
                         dstport = (unsigned short)(udp->uh_dport>>8|udp->uh_dport<<8);
