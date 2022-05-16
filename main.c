@@ -476,6 +476,46 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
             printf("        VLAN proto: %d [0x%04X]\n", vlan_proto, vlan_proto);
             vlan_encap_proto = (unsigned short)(vlan_ethernet->evl_encap_proto>>8|vlan_ethernet->evl_encap_proto<<8);
             printf(" VLAN encapsulation protocol: %d [0x%04X]\n", vlan_encap_proto, vlan_encap_proto);
+            switch (vlan_proto) {
+                case ETHERTYPE_IP:
+                    ip = (struct ip*)(packet + sizeof(struct ether_vlan_header));
+                    if (ip->ip_hl < 5) {
+                        printf(" Invalid IP header, return without further processing.\n");
+                        return;
+                    }
+                    size_ip = ip->ip_hl*4;
+                    total_len = IP_TOTAL(ip->ip_len);
+                    printf(" Sizeof IP header: %d\n", (unsigned short)size_ip);
+                    printf("       IP version: %d\n", ip->ip_v);
+                    printf(" IP header length: %d\n", ip->ip_hl);
+                    printf("  IP total length: %d\n", IP_TOTAL(ip->ip_len));
+                    printf("   IP src address: %s\n", inet_ntoa(ip->ip_src));
+                    printf("   IP dst address: %s\n", inet_ntoa(ip->ip_dst));
+                    printf(" IP protocol type: %d\n", ip->ip_p);
+                    printf("           IP TTL: %d\n", (unsigned short)ip->ip_ttl);
+                    if (is_ipv4_multicast(inet_ntoa(ip->ip_dst))) {
+                        fspec.ip_mcast = 1;
+                    }
+                    // we deal with IPv4 UPD MULTICAST frames now
+                    if (ip->ip_p == IPPROTO_UDP) {
+                        fspec.udp = 1;
+                        payload = packet + sizeof(struct sniff_ethernet) + sizeof(struct ip) + sizeof(struct sniff_udp);
+                        size_payload = h->caplen - sizeof(struct pcap_pkthdr);  // cut off pcap header size from total length
+                        size_payload -= sizeof(struct ether_header);
+                        size_payload -= sizeof(struct ip);
+                        size_payload = IP_TOTAL(ip->ip_len) - sizeof(struct udphdr) - sizeof(struct ip);
+                    }
+                    // printout the payload in hex
+                    printf("   payload length: %d\n", size_payload);
+                    hexdump("payload", (const void *)(packet + sizeof(struct ether_header) + sizeof(struct ip) + sizeof(struct udphdr)), (size_t)size_payload);
+                    // 
+                break;
+                case ETHERTYPE_IPV6:
+                    // TODO! parse IPv6
+                break;
+                default:
+                break;
+            }
             // 
             hexdump("packet", (const void *)packet, (size_t)h->caplen); // print entire pcap packet - without pcap header
         break;
