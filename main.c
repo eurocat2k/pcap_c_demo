@@ -516,6 +516,7 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
                     // printout the payload in hex
                     printf("   payload length: %d\n", (int)(h->caplen-(sizeof(struct ether_vlan_header)+sizeof(struct ip)+sizeof(struct udphdr))));
                     hexdump("payload", (const void *)(packet + sizeof(struct ether_vlan_header) + sizeof(struct ip) + sizeof(struct udphdr)), (size_t)size_payload);
+                    hexdump("raw packet", (const void *)packet, (size_t)h->caplen); // print entire pcap packet - without pcap header
                     // 
                 break;
                 case ETHERTYPE_IPV6:
