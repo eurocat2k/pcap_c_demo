@@ -408,20 +408,27 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
     fspec.dlt_eth = 1;  // this is ethernet frame
     // 
     // print out PCAP header info
+#ifdef VERBOSE
     printf("         caption size: %d\n", h->caplen);
     printf("                  len: %d\n", h->len);
     printf("  ethernet frame size: %d\n", ETHER_HDR_LEN);
+#endif
     // detect ethernet type
     ethernet = (struct ether_header*)(packet);    // we do expect ethernet frames
     ether_type = ETHER_TYPE(ethernet->ether_type);
     switch(ether_type) {
         case ETHERTYPE_IP:
             fspec.eth_ipv4 = 1;
+#ifdef VERBOSE
             printf(" Ethernet IPv4 frame detected\n");
+#endif
             if (ETHER_IS_MULTICAST(ethernet->ether_dhost)) {
                 fspec.eth_mcast_v4 = 1;
+#ifdef VERBOSE
                 printf(" Ethernet IPv4 multicast frame detected\n");
+#endif
             }
+#ifdef VERBOSE
             // print src/dst MAC addresses
             printf(" ethernet src: %s\n", ether_ntoa((const struct ether_addr *)&ethernet->ether_shost));
             printf(" ethernet dst: %s\n", ether_ntoa((const struct ether_addr *)&ethernet->ether_dhost));
@@ -463,6 +470,7 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
             }
             // printout the payload in hex
             printf("   payload length: %d\n", size_payload);
+#endif
             // hexdump("payload", (const void *)(packet + sizeof(struct ether_header) + sizeof(struct ip) + sizeof(struct udphdr)), (size_t)size_payload);
             size_t plen = 0;
             void *pyld = get_payload((void *)packet, &plen);
@@ -484,12 +492,17 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
         break;
         case ETHERTYPE_VLAN:
             fspec.eth_vlan = 1;
+#ifdef VERBOSE
             printf(" Ethernet VN-tagged frame detected\n");
+#endif
             vlan_ethernet = (struct ether_vlan_header*)packet;
             if (ETHER_IS_MULTICAST(vlan_ethernet->evl_dhost)) {
                 fspec.eth_vlan_mcast = 1;
+#ifdef VERBOSE
                 printf(" Ethernet VN-tagged multicast frame detected\n");
+#endif
             }
+#ifdef VERBOSE
             // print src/dst MAC addresses
             printf(" VLAN ethernet src: %s\n", ether_ntoa((const struct ether_addr *)&vlan_ethernet->evl_shost));
             printf(" VLAN ethernet dst: %s\n", ether_ntoa((const struct ether_addr *)&vlan_ethernet->evl_dhost));
@@ -499,9 +512,11 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
             printf("        VLAN proto: %d [0x%04X]\n", vlan_proto, vlan_proto);
             vlan_encap_proto = (unsigned short)(vlan_ethernet->evl_encap_proto>>8|vlan_ethernet->evl_encap_proto<<8);
             printf(" VLAN encapsulation protocol: %d [0x%04X]\n", vlan_encap_proto, vlan_encap_proto);
+#endif
             switch (vlan_proto) {
                 case ETHERTYPE_IP:
-                    ip = (struct ip*)(packet + sizeof(struct ether_vlan_header));
+                ip = (struct ip*)(packet + sizeof(struct ether_vlan_header));
+#ifdef VERBOSE
                     if (ip->ip_hl < 5) {
                         printf(" Invalid IP header, return without further processing.\n");
                         return;
@@ -517,12 +532,14 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
                     printf("   IP dst address: %s\n", inet_ntoa(ip->ip_dst));
                     printf(" IP protocol type: %d\n", ip->ip_p);
                     printf("           IP TTL: %d\n", (unsigned short)ip->ip_ttl);
+#endif
                     if (is_ipv4_multicast(inet_ntoa(ip->ip_dst))) {
                         fspec.ip_mcast = 1;
                     }
                     // we deal with IPv4 UPD MULTICAST frames now
                     if (ip->ip_p == IPPROTO_UDP) {
                         fspec.udp = 1;
+#ifdef VERBOSE
                         payload = packet + sizeof(struct ether_vlan_header) + size_ip + sizeof(struct udphdr);
                         size_payload = htons(ip->ip_len) - (size_ip + sizeof(struct udphdr));
                         udp = (struct udphdr *)(packet + sizeof(struct ether_vlan_header) + sizeof(struct ip));
@@ -531,6 +548,7 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
                         printf(" UDP src port: %d\n", srcport);
                         printf(" UDP dst port: %d\n", dstport);
                         printf(" Sum headers size: %d\n", (int)(sizeof(struct ether_vlan_header) + htons(ip->ip_len) + sizeof(struct udphdr)));
+#endif
                         size_t plen = 0;
                         void *pyld = get_payload((void *)packet, &plen);
                         hexdump("payload", pyld, plen);
