@@ -804,7 +804,8 @@ void *get_payload(void* base, size_t *size) {
     } else if (ether_type == ETHERTYPE_VLAN) {
         // extended ethernet header assumed
         struct ether_vlan_header *vlh = base;
-        uint16_t ether_enc_type = vlh->evl_proto;
+        uint16_t ether_enc_type = htons(vlh->evl_proto);
+        printf(" ** VLAN proto: 0x%04X\n", htons(vlh->evl_proto))
         if (ether_enc_type == IPPROTO_IP) {
             if ((ip = get_ip_hdr(base)) != NULL) {
                 ipv4 = (struct ip *)ip;
