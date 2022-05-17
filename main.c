@@ -34,7 +34,6 @@
 #include <netinet/udp.h>
 #include <netinet/tcp.h>
 #include <netinet/ip6.h>
-#include <netinet6/in6.h>
 #include <arpa/inet.h> 
 #include <netinet/if_ether.h>
 
@@ -53,7 +52,7 @@ bool is_ipv4_multicast(const char* ipstr);
 u_int16_t get_ethernet_type(void *base);
 void *get_ip_hdr(void *base);
 void *get_tcp_hdr(void *base);
-void *get_udp_hdr(void *base)
+void *get_udp_hdr(void *base);
 void get_payload(void* base, size_t *size);
 
 #ifndef PCAP_BUF_SIZE
