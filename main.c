@@ -806,7 +806,7 @@ void *get_payload(void* base, size_t *size) {
         struct ether_vlan_header *vlh = base;
         uint16_t ether_enc_type = htons(vlh->evl_proto);
         printf(" ** VLAN proto: 0x%04X\n", htons(vlh->evl_proto));
-        if (ether_enc_type == IPPROTO_IP) {
+        if (ether_enc_type == ETHERTYPE_IP) {
             if ((ip = get_ip_hdr(base)) != NULL) {
                 ipv4 = (struct ip *)ip;
                 int header_length = ipv4->ip_hl * 4;
