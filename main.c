@@ -502,6 +502,7 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
                 printf(" Ethernet VN-tagged multicast frame detected\n");
 #endif
             }
+            vlan_proto = get_vlan_ethernet_type((void *)packet);
 #ifdef VERBOSE
             // print src/dst MAC addresses
             printf(" VLAN ethernet src: %s\n", ether_ntoa((const struct ether_addr *)&vlan_ethernet->evl_shost));
