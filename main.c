@@ -548,7 +548,7 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
     // hexdump("packet", (const void *)packet, (size_t)h->caplen); // print entire pcap packet - without pcap header
     size_t plen = 0;
     void *pyld = get_payload((void *)packet, &plen);
-    printf(" get_payload(): payload = %p, payload length = %d\n", pyld, (int)plen);
+    printf(" get_payload(): payload = %p [%p], payload length = %d\n", pyld, packet, (int)plen);
     
     return;
 }
