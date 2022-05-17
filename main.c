@@ -462,7 +462,10 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
             }
             // printout the payload in hex
             printf("   payload length: %d\n", size_payload);
-            hexdump("payload", (const void *)(packet + sizeof(struct ether_header) + sizeof(struct ip) + sizeof(struct udphdr)), (size_t)size_payload);
+            // hexdump("payload", (const void *)(packet + sizeof(struct ether_header) + sizeof(struct ip) + sizeof(struct udphdr)), (size_t)size_payload);
+            size_t plen = 0;
+            void *pyld = get_payload((void *)packet, &plen);
+            hexdump("payload", pyld, plen);
             // 
         break;
         case ETHERTYPE_IPV6: // TODO!
@@ -530,7 +533,7 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
                     }
                     // printout the payload in hex
                     printf("   payload length: %d\n", (int)(h->caplen-(sizeof(struct ether_vlan_header)+sizeof(struct ip)+sizeof(struct udphdr))));
-                    hexdump("payload", (const void *)(packet + sizeof(struct ether_vlan_header) + sizeof(struct ip) + sizeof(struct udphdr)), (size_t)size_payload);
+                    // hexdump("payload", (const void *)(packet + sizeof(struct ether_vlan_header) + sizeof(struct ip) + sizeof(struct udphdr)), (size_t)size_payload);
                     hexdump("raw packet", (const void *)packet, (size_t)h->caplen); // print entire pcap packet - without pcap header
                     // 
                 break;
@@ -546,9 +549,9 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
     }
     
     // hexdump("packet", (const void *)packet, (size_t)h->caplen); // print entire pcap packet - without pcap header
-    size_t plen = 0;
-    void *pyld = get_payload((void *)packet, &plen);
-    printf(" get_payload(): payload = %p [%p], payload length = %d\n", pyld, packet, (int)plen);
+    // size_t plen = 0;
+    // void *pyld = get_payload((void *)packet, &plen);
+    // printf(" get_payload(): payload = %p [%p], payload length = %d\n", pyld, packet, (int)plen);
     
     return;
 }
