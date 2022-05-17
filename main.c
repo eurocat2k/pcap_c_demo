@@ -771,7 +771,7 @@ void *get_payload(void* base, size_t *size) {
             ipv4 = (struct ip *)ip;
             if (ipv4->ip_p == IPPROTO_UDP) {
                 int header_length = (ipv4->ip_hl * 4);
-                len = ipv4->ip_len - header_length;
+                len = htons(ipv4->ip_len) - header_length;
                 payload = (ipv4 + header_length);
             }
         }
@@ -780,7 +780,7 @@ void *get_payload(void* base, size_t *size) {
         if ((ip = get_ip_hdr(base)) != NULL) {
             ipv6 = (struct ip6_hdr *)ip;
             int header_length = sizeof(struct ip6_hdr);
-            len = ipv6->ip6_ctlun.ip6_un1.ip6_un1_plen - header_length;
+            len = htons(ipv6->ip6_ctlun.ip6_un1.ip6_un1_plen) - header_length;
             payload = (ipv6 + ipv6->ip6_ctlun.ip6_un1.ip6_un1_plen);
         }
     }
