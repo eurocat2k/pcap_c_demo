@@ -788,16 +788,16 @@ void *get_payload(void* base, size_t *size) {
     struct ip6_hdr *ipv6 = NULL;
     struct tcphdr *tcp = NULL;
     struct udphdr *udp = NULL;
-    if (ether_type == ETHERTYPE_IP || ether_type == ETHERTYPE_IPV6) {
+    if (ether_type == ETHERTYPE_IP) {
         // normal ethernet header assumed
         if ((ip = get_ip_hdr(base)) != NULL) {
             ipv4 = (struct ip *)ip;
             if (ipv4->ip_p == IPPROTO_UDP) {
                 udp = get_udp_hdr(base);
                 int header_length = (ipv4->ip_hl * 4);
-                printf(" ** IPv4 header length: %d\n", header_length);
+                // printf(" ** IPv4 header length: %d\n", header_length);
                 len = htons(ipv4->ip_len) - header_length - sizeof(struct udphdr);
-                printf(" ** IPv4 payload length: %d\n", (int)len);
+                // printf(" ** IPv4 payload length: %d\n", (int)len);
                 payload = (base + ETHER_HDR_LEN + header_length + sizeof(struct udphdr));
             }
         }
@@ -805,7 +805,17 @@ void *get_payload(void* base, size_t *size) {
         // extended ethernet header assumed
         struct ether_vlan_header *vlh = base;
         uint16_t ether_enc_type = vlh->evl_proto;
-        printf(" ** VLAN encapsulated ethernet type: 0x%04X\n", htons(ether_enc_type));
+        if (ether_enc_type == IPPROTO_IP) {
+            if ((ip = get_ip_hdr(base)) != NULL) {
+                ipv4 = (struct ip *)ip;
+                int header_length = ipv4->ip_hl * 4;
+                printf(" ** VLAN ecnapsulated IPv4 header length: %d\n", header_length);
+                len = htons(ipv4->ip_len) - header_length - sizeof(struct udphdr);
+                printf(" ** VLAN ecnapsulated IPv4 payload length: %d\n", (int)len);
+                payload = (base + ETHER_HDR_LEN + header_length + sizeof(struct udphdr));
+            }
+        }
+        // printf(" ** VLAN encapsulated ethernet type: 0x%04X\n", htons(ether_enc_type));
         // if ((ip = get_ip_hdr(base)) != NULL) {
         //     ipv4 = (struct ip *)ip;
         //     ipv6 = (struct ip6_hdr *)ip;
