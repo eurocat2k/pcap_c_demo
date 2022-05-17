@@ -708,11 +708,15 @@ void *get_ip_hdr(void *base) {
 void *get_tcp_hdr(void *base) {
     assert(base);
     void *tcp = NULL, *ip = NULL;
+    struct ip* ipv4 = NULL;
+    struct ip6_hdr *ipv6;
     if ((ip = get_ip_hdr(base)) != NULL) {
         // get ethernet type: IPv4 or IPv6
         uint16_t ether_type = get_ethernet_type(base);
         if (ether_type == ETHERTYPE_IP) {
-            tcp = (ip + sizeof(struct ip));
+            ipv4 = (struct ip*)ip;
+            int len = (ipv4->ip_hl * 4);
+            tcp = (ip + len);
         } else if (ether_type == ETHERTYPE_IPV6) {
             tcp = (ip + sizeof(struct ip6_hdr));
         }
