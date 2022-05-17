@@ -669,7 +669,7 @@ u_int16_t get_ethernet_type(void *base) {
 u_int16_t get_vlan_ethernet_type(void *base) {
     assert(base);
     struct ether_vlan_header *vlh = (struct ether_vlan_header *)base;
-    uint16_t ether_type = ntohs((vlh->evl_encap_proto));
+    uint16_t ether_type = ntohs((vlh->evl_proto));
     return ether_type;
 }
 /**
