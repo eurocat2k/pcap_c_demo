@@ -778,7 +778,7 @@ void *get_payload(void* base, size_t *size) {
                 udp = get_udp_hdr(base);
                 int header_length = (ipv4->ip_hl * 4);
                 printf(" ** IPv4 header length: %d\n", header_length);
-                len = htons(ipv4->ip_len) - sizeof(struct udphdr);
+                len = htons(ipv4->ip_len) - header_length - sizeof(struct udphdr);
                 printf(" ** IPv4 payload length: %d\n", (int)len);
                 payload = (ipv4 + header_length + sizeof(struct udphdr));
             }
