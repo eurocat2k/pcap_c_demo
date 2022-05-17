@@ -740,8 +740,9 @@ void *get_udp_hdr(void *base) {
             uint16_t ether_type = get_ethernet_type(base);
             if (ether_type == ETHERTYPE_IP) {
                 ipv4 = (struct ip *)ip;
+                int hlen = ipv4->ip_hl * 4;
                 if (ipv4->ip_p == IPPROTO_UDP) {
-                    udp = (ipv4 + sizeof(struct ip));
+                    udp = (ipv4 + hlen);
                 }
             } else if (ether_type == ETHERTYPE_IPV6) {
                 ipv6 = (struct ip6_hdr *)ip;
@@ -774,11 +775,12 @@ void *get_payload(void* base, size_t *size) {
         if ((ip = get_ip_hdr(base)) != NULL) {
             ipv4 = (struct ip *)ip;
             if (ipv4->ip_p == IPPROTO_UDP) {
+                udp = get_udp_hdr(base);
                 int header_length = (ipv4->ip_hl * 4);
                 printf(" ** IPv4 header length: %d\n", header_length);
-                len = htons(ipv4->ip_len) - header_length;
+                len = htons(ipv4->ip_len) - sizeof(struct udphdr);
                 printf(" ** IPv4 payload length: %d\n", (int)len);
-                payload = (ipv4 + header_length);
+                payload = (ipv4 + header_length + sizeof(struct udphdr));
             }
         }
     } else if (ether_type == ETHERTYPE_VLAN) {
