@@ -30,6 +30,11 @@
 #include <errno.h> 
 #include <sys/socket.h> 
 #include <netinet/in.h> 
+#include <netinet/ip.h>
+#include <netinet/udp.h>
+#include <netinet/tcp.h>
+#include <netinet/ip6.h>
+#include <netinet6/in6.h>
 #include <arpa/inet.h> 
 #include <netinet/if_ether.h>
 
@@ -43,6 +48,13 @@ void hexdump(const char*title, const void* data, size_t size);
 void got_packet(u_char *user, const struct pcap_pkthdr *h,const u_char *byte);
 void sig_handler(int signal);
 bool is_ipv4_multicast(const char* ipstr);
+
+// new wrapper functions
+u_int16_t get_ethernet_type(void *base);
+void *get_ip_hdr(void *base);
+void *get_tcp_hdr(void *base);
+void *get_udp_hdr(void *base)
+void get_payload(void* base, size_t *size);
 
 #ifndef PCAP_BUF_SIZE
 #define PCAP_BUF_SIZE (1600)
@@ -628,4 +640,147 @@ bool is_ipv4_multicast(const char* ipstr){
         }
     }
     return false;
+}
+/**
+ * @name   get_ethernet_type
+ * @note   get ethernet type of the ethernet packet
+ * @param  void *base - pointer to the captured packet data
+ * @retval unsigned short - in byte ordered (swapped) - value of ethernet type
+ */
+u_int16_t get_ethernet_type(void *base) {
+    assert(base);
+    uint16_t ether_type = ntohs(*(uint16_t *)(base + ETHER_ADDR_LEN + ETHER_ADDR_LEN));
+    return ether_type;
+}
+/**
+ * @name   get_ip_hdr
+ * @note   locates IP header struct in various cases - DLT is ethernet, if it does not use VLAN tagging,
+ *         then IP header starts at location right after 2 x 6 bytes of MAC addresses (dst and src) plus
+ *         two bytes with ethernet type. First of all this type value need to be checked. Depending on
+ *         its value we can set up the offset of the IP header. If ethernet type is 0x0800, then we
+ *         shall add 14 bytes offset to the very beginning of the packet pointer - containing the two
+ *         MAC addresses - 12 bytes - and the type information with another two of them (12 + 2 = 14).
+ * 
+ *         If type is 0x8100, then we need to calculate a bit more bytes in the header. Additional 4
+ *         octets given into the header structure. Therefore the base pointer need to be extended 18
+ *         bytes offset to reach IP header location.
+ *         Those additional four bytes contains the followig data:
+ *         
+ *         2 bytes for ethernet type - as before - but now it refers to the VLAN tagged value (0x8100),
+ *         in this case the next two contains the VLAN TAG - or VLAN ID - on another 2 bytes.
+ * 
+ *         Then the former 2 bytes as if were no VLAN TAG in the frame - the type of ethernet in the
+ *         VLAN tagged frame. For example if it is 0x0800, then we know we deal with IPv4 ethernet packet.
+ *         
+ *         Any other case - and it is true for both scenarios - the gap between the base pointer and the
+ *         payload depends on ethernet type value and the size of the correlated structures.
+ * 
+ *         This function handles only IPv4 ethernet types any other cases returns NULL.
+ * @param  void *base - the pointer to the very beginning of the captured packet.
+ * @retval pointer to the IP header
+ */
+void *get_ip_hdr(void *base) {
+    assert(base);
+    // If frame is not ethernet retun NULL
+    // uint16_t ether_type = ntohs(*(uint16_t *) (base + ETHER_ADDR_LEN + ETHER_ADDR_LEN));
+    uint16_t ether_type = get_ethernet_type(base);
+    if (ether_type == ETHERTYPE_IP ) {
+        return base + ETHER_ADDR_LEN + ETHER_ADDR_LEN + ETHER_TYPE_LEN; // two times ETHER_ADDR_LEN (dst and src) plus ETHER_TYPE_LEN: 12 + 2
+    } else if (ether_type == ETHERTYPE_VLAN ) {
+        // VLAN tag
+        ether_type = ntohs(*(uint16_t *) (base + ETHER_ADDR_LEN + ETHER_ADDR_LEN + ETHER_TYPE_LEN + ETHER_VLAN_ENCAP_LEN)); // 12 + 2 + 4
+        if (ether_type == ETHERTYPE_IP || ether_type == ETHERTYPE_IPV6)  {
+            return (base + ETHER_ADDR_LEN + ETHER_ADDR_LEN + ETHER_TYPE_LEN + ETHER_VLAN_ENCAP_LEN + ETHER_TYPE_LEN);   // 12 + 2 + 4 + 2
+        }
+    } else if (ether_type == ETHERTYPE_IPV6) {
+        return base + ETHER_ADDR_LEN + ETHER_ADDR_LEN + ETHER_TYPE_LEN; // two times ETHER_ADDR_LEN (dst and src) plus ETHER_TYPE_LEN: 12 + 2
+    }
+    return NULL;
+}
+/**
+ * @name   get_tcp_hdr
+ * @note   locates the TCP protocol header in the ethernet packet right after IP header
+ * @param  void *base: 
+ * @retval pointer to the TCP header
+ */
+void *get_tcp_hdr(void *base) {
+    assert(base);
+    void *tcp = NULL, *ip = NULL;
+    if ((ip = get_ip_hdr(base)) != NULL) {
+        // get ethernet type: IPv4 or IPv6
+        uint16_t ether_type = get_ethernet_type(base);
+        if (ether_type == ETHERTYPE_IP) {
+            tcp = (ip + sizeof(struct ip));
+        } else if (ether_type == ETHERTYPE_IPV6) {
+            tcp = (ip + sizeof(struct ip6_hdr));
+        }
+    }
+    return tcp;
+}
+/**
+ * @name   get_udp_hdr
+ * @note   locates the UDP protocol header in the ethernet packet right after IP header
+ * @param  void *base: 
+ * @retval pointer to the UDP header
+ */
+void *get_udp_hdr(void *base) {
+    assert(base);
+    void *udp = NULL, *ip = NULL;
+    struct ip *ipv4 = NULL;
+    struct ip6_hdr *ipv6 = NULL;
+    if (NULL != get_ip_hdr(base)) {
+        if ((ip = get_ip_hdr(base)) != NULL) {
+            // get ethernet type: IPv4 or IPv6
+            uint16_t ether_type = get_ethernet_type(base);
+            if (ether_type == ETHERTYPE_IP) {
+                ipv4 = (struct ip *)ip;
+                if (ipv4->ip_p == IPPROTO_UDP) {
+                    udp = (ipv4 + sizeof(struct ip));
+                }
+            } else if (ether_type == ETHERTYPE_IPV6) {
+                ipv6 = (struct ip6_hdr *)ip;
+                if (ipv6->ip6_ctlun.ip6_un1.ip6_un1_nxt == IPPROTO_UDP) {
+                    udp = (ipv6 + sizeof(struct ip6_hdr));
+                }
+                udp = (ip + sizeof(struct ip6_hdr));
+            }
+        }
+    }
+    return udp;
+}
+/**
+ * @name   get_payload
+ * @note   returns the pointer of the payload and its size of the ethernet packet
+ * @param  void *base - pointer to the ethernet packet
+ * @param  size_t *size - pointer to the return value of the payload size
+ * @retval None
+ */
+void get_payload(void* base, size_t *size) {
+    size_t len = 0;
+    uint16_t ether_type = get_ethernet_type(base);
+    void *payload = NULL, *ip;
+    struct ip *ipv4 = NULL;
+    struct ip6_hdr *ipv6 = NULL;
+    struct tcphdr *tcp = NULL;
+    struct udphdr *udp = NULL;
+    if (ether_type == ETHERTYPE_IP || ether_type == ETHERTYPE_IPV6) {
+        // normal ethernet header assumed
+        if ((ip = get_ip_hdr(base)) != NULL) {
+            ipv4 = (struct ip *)ip;
+            if (ipv4->ip_p == IPPROTO_UDP) {
+                int header_length = (ipv4->ip_hl * 4);
+                len = ipv4->ip_len - header_length;
+                payload = (ipv4 + header_length);
+            }
+        }
+    } else if (ether_type == ETHERTYPE_VLAN) {
+        // extended ethernet header assumed
+        if ((ip = get_ip_hdr(base)) != NULL) {
+            ipv6 = (struct ip6_hdr *)ip;
+            int header_length = sizeof(struct ip6_hdr);
+            len = ipv6->ip6_ctlun.ip6_un1.ip6_un1_plen - header_length;
+            payload = (ipv6 + ipv6->ip6_ctlun.ip6_un1.ip6_un1_plen);
+        }
+    }
+    *size = len;
 }
