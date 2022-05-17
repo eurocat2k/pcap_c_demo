@@ -803,7 +803,8 @@ void *get_payload(void* base, size_t *size) {
         }
     } else if (ether_type == ETHERTYPE_VLAN) {
         // extended ethernet header assumed
-        uint16_t ether_enc_type = get_vlan_ethernet_type(base);
+        struct ether_vlan_header *vlh = base;
+        uint16_t ether_enc_type = htons(vlh->evl_encap_proto);
         printf(" ** VLAN encapsulated ethernet type: 0x%04X\n", htons(ether_enc_type));
         // if ((ip = get_ip_hdr(base)) != NULL) {
         //     ipv4 = (struct ip *)ip;
