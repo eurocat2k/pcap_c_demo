@@ -50,6 +50,7 @@ bool is_ipv4_multicast(const char* ipstr);
 
 // new wrapper functions
 u_int16_t get_ethernet_type(void *base);
+u_int16_t get_vlan_ethernet_type(void *base);
 void *get_ip_hdr(void *base);
 void *get_tcp_hdr(void *base);
 void *get_udp_hdr(void *base);
@@ -530,11 +531,13 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
                         printf(" UDP src port: %d\n", srcport);
                         printf(" UDP dst port: %d\n", dstport);
                         printf(" Sum headers size: %d\n", (int)(sizeof(struct ether_vlan_header) + htons(ip->ip_len) + sizeof(struct udphdr)));
+                        size_t plen = 0;
+                        void *pyld = get_payload((void*)packet, &plen);
                     }
                     // printout the payload in hex
-                    printf("   payload length: %d\n", (int)(h->caplen-(sizeof(struct ether_vlan_header)+sizeof(struct ip)+sizeof(struct udphdr))));
+                    // printf("   payload length: %d\n", (int)(h->caplen-(sizeof(struct ether_vlan_header)+sizeof(struct ip)+sizeof(struct udphdr))));
                     // hexdump("payload", (const void *)(packet + sizeof(struct ether_vlan_header) + sizeof(struct ip) + sizeof(struct udphdr)), (size_t)size_payload);
-                    hexdump("raw packet", (const void *)packet, (size_t)h->caplen); // print entire pcap packet - without pcap header
+                    // hexdump("raw packet", (const void *)packet, (size_t)h->caplen); // print entire pcap packet - without pcap header
                     // 
                 break;
                 case ETHERTYPE_IPV6:
@@ -649,12 +652,24 @@ bool is_ipv4_multicast(const char* ipstr){
 /**
  * @name   get_ethernet_type
  * @note   get ethernet type of the ethernet packet
- * @param  void *base - pointer to the captured packet data
+ * @param  void *base - pointer to the packet data
  * @retval unsigned short - in byte ordered (swapped) - value of ethernet type
  */
 u_int16_t get_ethernet_type(void *base) {
     assert(base);
-    uint16_t ether_type = ntohs(*(uint16_t *)(base + ETHER_ADDR_LEN + ETHER_ADDR_LEN));
+    uint16_t ether_type = ntohs(*(uint16_t *)(base + ETHER_HDR_LEN - ETHER_TYPE_LEN));
+    return ether_type;
+}
+/**
+ * @name   get_vlan_ethernet_type
+ * @note   get VLAN encapsulated ethernet type
+ * @param  void * base - pointer to the packet data 
+ * @retval 
+ */
+u_int16_t get_vlan_ethernet_type(void *base) {
+    assert(base);
+    struct ether_vlan_header *vlh = base + ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
+    uint16_t ether_type = ntohs((vlh->evl_encap_proto));
     return ether_type;
 }
 /**
@@ -788,12 +803,15 @@ void *get_payload(void* base, size_t *size) {
         }
     } else if (ether_type == ETHERTYPE_VLAN) {
         // extended ethernet header assumed
-        if ((ip = get_ip_hdr(base)) != NULL) {
-            ipv6 = (struct ip6_hdr *)ip;
-            int header_length = sizeof(struct ip6_hdr);
-            len = htons(ipv6->ip6_ctlun.ip6_un1.ip6_un1_plen) - header_length;
-            payload = (ipv6 + ipv6->ip6_ctlun.ip6_un1.ip6_un1_plen);
-        }
+        uint16_t ether_enc_type = get_vlan_ethernet_type(base);
+        printf(" ** VLAN encapsulated ethernet type: 0x%04X\n", htons(ether_enc_type));
+        // if ((ip = get_ip_hdr(base)) != NULL) {
+        //     ipv4 = (struct ip *)ip;
+        //     ipv6 = (struct ip6_hdr *)ip;
+        //     int header_length = sizeof(struct ip6_hdr);
+        //     len = htons(ipv6->ip6_ctlun.ip6_un1.ip6_un1_plen) - header_length;
+        //     payload = (base + ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN );
+        // }
     }
     *size = len;
     return payload;
