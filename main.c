@@ -710,6 +710,7 @@ void *get_ip_hdr(void *base) {
         // VLAN tag
         // ether_type = ntohs(*(uint16_t *) (base + ETHER_ADDR_LEN + ETHER_ADDR_LEN + ETHER_TYPE_LEN + ETHER_VLAN_ENCAP_LEN)); // 12 + 2 + 4
         ether_type = get_vlan_ethernet_type(base);
+        printf(" *** VLAN ethernet type: 0x%04X\n", ether_type);
         if (ether_type == ETHERTYPE_IP || ether_type == ETHERTYPE_IPV6)  {
             return (base + ETHER_HDR_LEN + ETHER_TYPE_LEN + ETHER_VLAN_ENCAP_LEN);   // 12 + 2 + 4 + 2
         }
