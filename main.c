@@ -814,6 +814,8 @@ void *get_payload(void* base, size_t *size) {
                 len = htons(ipv4->ip_len) - header_length - sizeof(struct udphdr);
                 printf(" ** VLAN ecnapsulated IPv4 payload length: %d\n", (int)len);
                 payload = (base + ETHER_HDR_LEN + header_length + sizeof(struct udphdr));
+            } else {
+                printf(" ** IP not detected\n");
             }
         }
         // printf(" ** VLAN encapsulated ethernet type: 0x%04X\n", htons(ether_enc_type));
