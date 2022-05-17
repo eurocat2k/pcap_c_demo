@@ -705,15 +705,16 @@ void *get_ip_hdr(void *base) {
     // uint16_t ether_type = ntohs(*(uint16_t *) (base + ETHER_ADDR_LEN + ETHER_ADDR_LEN));
     uint16_t ether_type = get_ethernet_type(base);
     if (ether_type == ETHERTYPE_IP ) {
-        return base + ETHER_ADDR_LEN + ETHER_ADDR_LEN + ETHER_TYPE_LEN; // two times ETHER_ADDR_LEN (dst and src) plus ETHER_TYPE_LEN: 12 + 2
+        return base + ETHER_HDR_LEN + ETHER_TYPE_LEN; // two times ETHER_ADDR_LEN (dst and src) plus ETHER_TYPE_LEN: 12 + 2
     } else if (ether_type == ETHERTYPE_VLAN ) {
         // VLAN tag
-        ether_type = ntohs(*(uint16_t *) (base + ETHER_ADDR_LEN + ETHER_ADDR_LEN + ETHER_TYPE_LEN + ETHER_VLAN_ENCAP_LEN)); // 12 + 2 + 4
+        // ether_type = ntohs(*(uint16_t *) (base + ETHER_ADDR_LEN + ETHER_ADDR_LEN + ETHER_TYPE_LEN + ETHER_VLAN_ENCAP_LEN)); // 12 + 2 + 4
+        ether_type = get_vlan_ethernet_type(base);
         if (ether_type == ETHERTYPE_IP || ether_type == ETHERTYPE_IPV6)  {
-            return (base + ETHER_ADDR_LEN + ETHER_ADDR_LEN + ETHER_TYPE_LEN + ETHER_VLAN_ENCAP_LEN + ETHER_TYPE_LEN);   // 12 + 2 + 4 + 2
+            return (base + ETHER_HDR_LEN + ETHER_TYPE_LEN + ETHER_VLAN_ENCAP_LEN);   // 12 + 2 + 4 + 2
         }
     } else if (ether_type == ETHERTYPE_IPV6) {
-        return base + ETHER_ADDR_LEN + ETHER_ADDR_LEN + ETHER_TYPE_LEN; // two times ETHER_ADDR_LEN (dst and src) plus ETHER_TYPE_LEN: 12 + 2
+        return base + ETHER_HDR_LEN + ETHER_TYPE_LEN; // two times ETHER_ADDR_LEN (dst and src) plus ETHER_TYPE_LEN: 12 + 2
     }
     return NULL;
 }
