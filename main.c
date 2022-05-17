@@ -53,7 +53,7 @@ u_int16_t get_ethernet_type(void *base);
 void *get_ip_hdr(void *base);
 void *get_tcp_hdr(void *base);
 void *get_udp_hdr(void *base);
-void get_payload(void* base, size_t *size);
+void *get_payload(void* base, size_t *size);
 
 #ifndef PCAP_BUF_SIZE
 #define PCAP_BUF_SIZE (1600)
@@ -546,6 +546,9 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
     }
     
     // hexdump("packet", (const void *)packet, (size_t)h->caplen); // print entire pcap packet - without pcap header
+    size_t plen = 0;
+    void *pyld = get_payload((void *)packet, &plen);
+    printf(" get_payload(): payload = %p, payload length = %d\n", pyld, (int)plen);
     
     return;
 }
@@ -754,7 +757,7 @@ void *get_udp_hdr(void *base) {
  * @param  size_t *size - pointer to the return value of the payload size
  * @retval None
  */
-void get_payload(void* base, size_t *size) {
+void *get_payload(void* base, size_t *size) {
     size_t len = 0;
     uint16_t ether_type = get_ethernet_type(base);
     void *payload = NULL, *ip;
@@ -782,4 +785,5 @@ void get_payload(void* base, size_t *size) {
         }
     }
     *size = len;
+    return payload;
 }
