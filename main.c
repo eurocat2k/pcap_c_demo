@@ -532,7 +532,8 @@ void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet)
                         printf(" UDP dst port: %d\n", dstport);
                         printf(" Sum headers size: %d\n", (int)(sizeof(struct ether_vlan_header) + htons(ip->ip_len) + sizeof(struct udphdr)));
                         size_t plen = 0;
-                        void *pyld = get_payload((void*)packet, &plen);
+                        void *pyld = get_payload((void *)packet, &plen);
+                        hexdump("payload", pyld, plen);
                     }
                     // printout the payload in hex
                     // printf("   payload length: %d\n", (int)(h->caplen-(sizeof(struct ether_vlan_header)+sizeof(struct ip)+sizeof(struct udphdr))));
