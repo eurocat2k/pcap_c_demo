@@ -367,7 +367,13 @@ char *trim(char *s) {
  * @param  const unsigedn char *byte - pointer to the buffer, where caught packets stored during the operation
  * @retval None
  */
-void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet){
+void got_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet) {
+    size_t plen = 0;
+    void *pyld = get_payload((void *)packet, &plen);
+    hexdump("payload", pyld, plen);
+}
+// old verbose
+void got_packet_old(u_char *user, const struct pcap_pkthdr *h, const u_char *packet){
     struct {
         uint8_t dlt_eth: 1;     // ethernet or not
         uint8_t eth_ipv4: 1;        // is IPv4 ethernet
@@ -827,27 +833,27 @@ void *get_payload(void* base, size_t *size) {
         // extended ethernet header assumed
         struct ether_vlan_header *vlh = base;
         uint16_t ether_enc_type = htons(vlh->evl_proto);
+#ifdef VERBOSE
         printf(" ** VLAN proto: 0x%04X\n", htons(vlh->evl_proto));
+#endif
         if (ether_enc_type == ETHERTYPE_IP) {
             if ((ip = get_ip_hdr(base)) != NULL) {
                 ipv4 = (struct ip *)ip;
                 int header_length = ipv4->ip_hl * 4;
+#ifdef VERBOSE
                 printf(" ** VLAN ecnapsulated IPv4 header length: %d\n", header_length);
+#endif
                 len = htons(ipv4->ip_len) - header_length - sizeof(struct udphdr);
+#ifdef VERBOSE
                 printf(" ** VLAN ecnapsulated IPv4 payload length: %d\n", (int)len);
+#endif
                 payload = (base + ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN + header_length + sizeof(struct udphdr));
             } else {
+#ifdef VERBOSE
                 printf(" ** IP not detected\n");
+#endif
             }
         }
-        // printf(" ** VLAN encapsulated ethernet type: 0x%04X\n", htons(ether_enc_type));
-        // if ((ip = get_ip_hdr(base)) != NULL) {
-        //     ipv4 = (struct ip *)ip;
-        //     ipv6 = (struct ip6_hdr *)ip;
-        //     int header_length = sizeof(struct ip6_hdr);
-        //     len = htons(ipv6->ip6_ctlun.ip6_un1.ip6_un1_plen) - header_length;
-        //     payload = (base + ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN );
-        // }
     }
     *size = len;
     return payload;
